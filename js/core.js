@@ -7,7 +7,7 @@
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const pad = (n) => String(n).padStart(2, '0');
 
-  // Page order of the site journey (used by the transition curtain)
+  // Site pages (links to these are handled in-site)
   const PAGES = {
     'index.html': ['01', 'Home'],
     'about.html': ['02', 'About'],
@@ -50,23 +50,11 @@
     else target.scrollIntoView({ behavior: 'smooth' });
   };
 
-  /* ---------- Page transitions ---------- */
-  const curtain = $('.page-curtain');
-  const setCurtain = (file) => {
-    if (!curtain) return;
-    const p = PAGES[file] || PAGES['index.html'];
-    $('b', curtain).textContent = p[0];
-    $('span', curtain).textContent = p[1];
-  };
-  let leaving = false;
-  const leave = (href, file) => {
-    if (!motion || !curtain || leaving) { location.href = href; return; }
-    leaving = true;
+  /* ---------- Page navigation (no transition screen) ---------- */
+  // The flag tells Home to skip its intro when the visitor arrives from another page
+  const leave = (href) => {
     try { sessionStorage.setItem('vk-nav', '1'); } catch (e) {}
-    setCurtain(file);
-    gsap.timeline({ onComplete: () => (location.href = href) })
-      .fromTo(curtain, { yPercent: 100, visibility: 'visible' }, { yPercent: 0, duration: 0.75, ease: 'power4.inOut' })
-      .fromTo($('.curtain-label', curtain), { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'power3.out' }, 0.4);
+    location.href = href;
   };
 
   document.addEventListener('click', (e) => {
@@ -84,15 +72,7 @@
       VK.scrollTo(el || 0);
       return;
     }
-    leave(url.href, file);
-  });
-
-  // Returning with the browser Back button can restore a covered page from cache
-  addEventListener('pageshow', (e) => {
-    if (!e.persisted || !curtain) return;
-    leaving = false;
-    if (window.gsap) gsap.set(curtain, { yPercent: 100, visibility: 'hidden' });
-    else curtain.style.visibility = 'hidden';
+    leave(url.href);
   });
 
   /* ---------- Helpers shared by page scripts ---------- */
@@ -193,7 +173,7 @@
     const L = VK.lenis;
     $$('h1.split, h2.split').forEach((h) => (h._words = VK.splitWords(h)));
 
-    // How did the visitor arrive? Internal link → short curtain. Direct visit to Home → full intro.
+    // How did the visitor arrive? Internal link → no intro. Direct visit to Home → full intro.
     const arrived = root.classList.contains('nav-in');
     try { sessionStorage.removeItem('vk-nav'); } catch (e) {}
     const hash = location.hash.length > 1 ? location.hash : '';
@@ -209,15 +189,6 @@
     } else {
       const pre = $('.preloader');
       if (pre) pre.style.display = 'none';
-      if (arrived && curtain) {
-        setCurtain(here);
-        gsap.set(curtain, { visibility: 'visible', yPercent: 0 });
-        tl.to($('.curtain-label', curtain), { y: -24, opacity: 0, duration: 0.4, ease: 'power2.in' }, 0.1)
-          .to(curtain, { yPercent: -100, duration: 0.9, ease: 'power4.inOut' }, 0.2)
-          .set(curtain, { visibility: 'hidden', yPercent: 100 })
-          .set($('.curtain-label', curtain), { clearProps: 'all' });
-        t0 = 0.6;
-      }
     }
     root.classList.remove('nav-in', 'skip-intro');
     tl.add(() => L && L.start(), full ? t0 + 0.8 : t0);
@@ -242,7 +213,6 @@
           onCleanup: (fn) => cleanups.push(fn),
         };
         if (opts.scenes) opts.scenes(c);
-        nextChapter();
         return () => cleanups.forEach((fn) => fn());
       }
     );
@@ -261,20 +231,6 @@
       }, t0 + 0.05);
     }
   };
-
-  // "Next chapter" band that links each page to the next
-  function nextChapter() {
-    const nc = $('.next-chapter');
-    if (!nc) return;
-    gsap.from($$('.nc-label, .nc-title, .nc-arrow', nc), {
-      opacity: 0, y: 40, duration: 1, stagger: 0.1, ease: 'power3.out',
-      scrollTrigger: { trigger: nc, start: 'top 88%', toggleActions: REV },
-    });
-    gsap.fromTo($('.nc-line i', nc), { scaleX: 0 }, {
-      scaleX: 1, ease: 'none',
-      scrollTrigger: { trigger: nc, start: 'top bottom', end: 'bottom bottom', scrub: true },
-    });
-  }
 
   // Header state, progress bar, chapter rail (desktop) and chapter pill (mobile)
   function globals() {

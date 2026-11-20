@@ -72,19 +72,6 @@
             c.onCleanup(() => gsap.set(ring, { clearProps: 'all' }));
           },
 
-          // A spotlight passes over the ten areas while the side panel stays put
-          what: (sec) => {
-            const items = $$('.spot-list li', sec);
-            const count = $('.what-count b', sec);
-            items.forEach((li, i) =>
-              ScrollTrigger.create({
-                trigger: li, start: 'top 58%', end: 'bottom 58%',
-                onToggle: (s) => { li.classList.toggle('on', s.isActive); if (s.isActive) count.textContent = pad(i + 1); },
-              })
-            );
-            c.onCleanup(() => items.forEach((li) => li.classList.remove('on')));
-          },
-
           // Approach: a dot travels the loop Understand → Plan → Execute → Improve
           approach: (sec) => {
             const fill = $('.cycle-fill', sec);
@@ -142,55 +129,19 @@
      SERVICES — a catalogue you move through with a live index
      ===================================================================== */
   if (page === 'services') {
-    const nav = $('.svc-nav');
-    const navLinks = $$('.svc-nav a');
-    const setActive = (id) => {
-      navLinks.forEach((a) => {
-        const on = a.getAttribute('href') === '#' + id;
-        a.classList.toggle('on', on);
-        if (on && nav.scrollWidth > nav.clientWidth + 4) nav.scrollTo({ left: a.parentElement.offsetLeft - 24, behavior: 'smooth' });
-      });
-    };
-
     VK.boot({
       heroExtra: (tl, t) => {
         tl.from('.chip-index a', { opacity: 0, y: 20, scale: 0.9, duration: 0.6, stagger: 0.05 }, t + 0.9);
       },
       scenes: (c) => {
-        const { desk } = c;
         VK.run({
           catalogue: (sec) => {
             const arts = $$('.svc', sec);
             arts.forEach((art) => {
-              ScrollTrigger.create({ trigger: art, start: 'top 45%', end: 'bottom 45%', onToggle: (s) => s.isActive && setActive(art.id) });
-              gsap.from($('.svc-num', art), { xPercent: -25, opacity: 0, duration: 1.1, ease: 'power3.out', scrollTrigger: { trigger: art, start: 'top 80%', toggleActions: REV } });
-              gsap.to($('.svc-num', art), { y: -70, ease: 'none', scrollTrigger: { trigger: art, start: 'top bottom', end: 'bottom top', scrub: true } });
               gsap.from($$('.svc-intro p, .svc-sub', art), { opacity: 0, y: 26, duration: 0.8, stagger: 0.1, scrollTrigger: { trigger: $('.svc-intro', art), start: 'top 88%', toggleActions: REV } });
               gsap.from($$('.svc-items li', art), { opacity: 0, x: -16, duration: 0.5, stagger: 0.04, scrollTrigger: { trigger: $('.svc-items', art), start: 'top 85%', toggleActions: REV } });
               gsap.fromTo($('.svc-gain', art), { clipPath: 'inset(0% 100% 0% 0% round 16px)' }, { clipPath: 'inset(0% 0% 0% 0% round 16px)', duration: 1, ease: 'power3.inOut', scrollTrigger: { trigger: $('.svc-gain', art), start: 'top 88%', toggleActions: REV } });
             });
-            if (desk) {
-              gsap.fromTo('.svc-nav-progress i', { scaleY: 0 }, { scaleY: 1, ease: 'none', scrollTrigger: { trigger: $('.svc-list', sec), start: 'top 45%', end: 'bottom 45%', scrub: true } });
-            }
-            c.onCleanup(() => navLinks.forEach((a) => a.classList.remove('on')));
-          },
-
-          // Engagement options start as a stacked deck and fan out
-          engage: (sec) => {
-            const cards = $$('.engage-card', sec);
-            if (desk) {
-              gsap.fromTo(cards,
-                { xPercent: (i) => (1.5 - i) * 106, rotation: (i) => (i - 1.5) * 6, y: 40 },
-                { xPercent: 0, rotation: 0, y: 0, ease: 'power1.inOut', scrollTrigger: { trigger: $('.engage-grid', sec), start: 'top 85%', end: 'top 35%', scrub: 0.8 } });
-            } else {
-              gsap.from(cards, { opacity: 0, y: 40, duration: 0.8, stagger: 0.1, scrollTrigger: { trigger: $('.engage-grid', sec), start: 'top 85%', toggleActions: REV } });
-            }
-          },
-
-          // Working approach: line fills and each step lights as you reach it
-          working: (sec) => {
-            gsap.fromTo($('.stepper-line i', sec), { scaleY: 0 }, { scaleY: 1, ease: 'none', scrollTrigger: { trigger: $('.stepper', sec), start: 'top 65%', end: 'bottom 65%', scrub: true } });
-            $$('.stepper li', sec).forEach((li) => ScrollTrigger.create({ trigger: li, start: 'top 65%', end: 'max', toggleClass: 'on' }));
           },
 
           talk: ctaGlow,
@@ -291,16 +242,13 @@
             }
           },
 
-          // Promises tick off, then the belief statement lights word by word
+          // Promises tick off one by one
           commitment: (sec) => {
             const checks = $$('.promises path', sec);
             checks.forEach(dash);
             gsap.timeline({ scrollTrigger: { trigger: $('.promises', sec), start: 'top 80%', toggleActions: REV } })
               .from($$('.promises li', sec), { opacity: 0, y: 24, duration: 0.6, stagger: 0.1 })
               .to(checks, { strokeDashoffset: 0, duration: 0.4, stagger: 0.1, ease: 'power2.out' }, 0.25);
-            const belief = $('.belief', sec);
-            if (!belief._words) belief._words = VK.splitWords(belief);
-            gsap.fromTo(belief._words, { opacity: 0.15 }, { opacity: 1, stagger: 0.1, ease: 'none', scrollTrigger: { trigger: belief, start: 'top 85%', end: 'center 55%', scrub: true } });
             c.onCleanup(() => gsap.set(checks, { clearProps: 'all' }));
           },
 
